@@ -1,0 +1,68 @@
+buildscript {
+    dependencies {
+        classpath("com.android.tools.build:gradle:$ANDROID_GRADLE_VERSION") {
+            exclude module: 'proguard-gradle'
+        }
+        classpath("net.sf.proguard:proguard-gradle:$PROGUARD_VERSION") {
+            force = true
+        }
+    }
+    repositories {
+        jcenter()
+        google()
+    }
+}
+
+allprojects {
+    repositories {
+        jcenter()
+        google()
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion COMPILE_SDK_VERSION as int
+    buildToolsVersion BUILD_TOOLS_VERSION
+    defaultConfig {
+        minSdkVersion MIN_SDK_VERSION
+        targetSdkVersion TARGET_SDK_VERSION
+        versionCode AFINAL_VERSION_CODE as int
+        versionName AFINAL_VERSION_NAME
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    packagingOptions {
+        exclude 'META-INF/NOTICE' // will not include NOTICE file
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/LICENSE' // will not include LICENSE file
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'com/jfinal/weixin/sdk/encrypt/必读.txt' // will not include LICENSE file
+        exclude 'META-INF/DEPENDENCIES'
+    }
+
+    android {
+        lintOptions {
+            abortOnError false
+        }
+    }
+}
+
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    //androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
+    //     exclude group: 'com.android.support', module: 'support-annotations'
+    // })
+    // testImplementation 'junit:junit:4.12'
+
+    // implementation "com.android.support:appcompat-v7:$ANDROID_SUPPORT_VERSION"
+}
+
+

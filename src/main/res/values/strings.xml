@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Afinal</string>
+    <string name="add">Add</string>
+    <string name="update">Update</string>
+    <string name="delete">delete</string>
+    <string name="stop">Stop</string>
 </resources>

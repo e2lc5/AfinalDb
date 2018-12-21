@@ -1,7 +1,8 @@
+/.gradle
+/.idea
+/AfinalDB/build
 /build
 /gradle
 /*.iml
 /gradlew
 /gradlew.bat
-/.gradle
-/.idea

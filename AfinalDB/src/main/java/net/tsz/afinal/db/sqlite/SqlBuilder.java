@@ -15,13 +15,21 @@
  */
 package net.tsz.afinal.db.sqlite;
 
-import android.text.*;
+import android.text.TextUtils;
 
-import net.tsz.afinal.db.table.*;
-import net.tsz.afinal.exception.*;
+import net.tsz.afinal.db.table.Id;
+import net.tsz.afinal.db.table.KeyValue;
+import net.tsz.afinal.db.table.ManyToOne;
+import net.tsz.afinal.db.table.Property;
+import net.tsz.afinal.db.table.TableInfo;
+import net.tsz.afinal.exception.DbException;
 
-import java.math.*;
-import java.util.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 public class SqlBuilder {
 
@@ -163,28 +171,32 @@ public class SqlBuilder {
 
 
     private static String getSelectSqlByTableName(String tableName) {
-        return new StringBuffer("SELECT * FROM ").append(tableName).toString();
+        return "SELECT * FROM " + tableName;
+    }
+
+    private static String getSelectCountSqlByTableName(String tableName) {
+        return "SELECT COUNT(*) FROM " + tableName;
+    }
+
+    public static SqlInfo getSelectCountSqlByTableName(Class<?> clazz) {
+        TableInfo table = TableInfo.get(clazz);
+
+        return new SqlInfo(getSelectCountSqlByTableName(table.getTableName()));
     }
 
 
     public static String getSelectSQL(Class<?> clazz, Object idValue) {
         TableInfo table = TableInfo.get(clazz);
 
-        StringBuffer strSQL = new StringBuffer(getSelectSqlByTableName(table.getTableName()));
-        strSQL.append(" WHERE ");
-        strSQL.append(getPropertyStrSql(table.getId().getColumn(), idValue));
-
-        return strSQL.toString();
+        return getSelectSqlByTableName(table.getTableName()) + " WHERE " +
+                getPropertyStrSql(table.getId().getColumn(), idValue);
     }
 
     public static SqlInfo getSelectSqlAsSqlInfo(Class<?> clazz, Object idValue) {
         TableInfo table = TableInfo.get(clazz);
 
-        StringBuffer strSQL = new StringBuffer(getSelectSqlByTableName(table.getTableName()));
-        strSQL.append(" WHERE ").append(table.getId().getColumn()).append("=?");
-
         SqlInfo sqlInfo = new SqlInfo();
-        sqlInfo.setSql(strSQL.toString());
+        sqlInfo.setSql(getSelectSqlByTableName(table.getTableName()) + " WHERE " + table.getId().getColumn() + "=?");
         sqlInfo.addValue(idValue);
 
         return sqlInfo;
@@ -316,8 +328,9 @@ public class SqlBuilder {
             Class<?> dataType = property.getDataType();
             if (dataType == int.class || dataType == Integer.class || dataType == BigInteger.class) {
                 strSQL.append(" integer");
-            } else if (dataType == float.class || dataType == Float.class || dataType == double.class || dataType == Double
-                    .class || dataType == BigDecimal.class) {
+            } else if (dataType == float.class || dataType == Float.class || dataType == double.class || dataType ==
+                    Double
+                            .class || dataType == BigDecimal.class) {
                 strSQL.append(" real");
             } else if (dataType == boolean.class || dataType == Boolean.class) {
                 strSQL.append(" numeric");

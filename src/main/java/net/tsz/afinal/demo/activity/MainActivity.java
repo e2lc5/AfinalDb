@@ -1,7 +1,6 @@
 package net.tsz.afinal.demo.activity;
 
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -36,12 +35,12 @@ import net.tsz.afinal.demo.pos.Pos_trade_pay;
 import net.tsz.afinal.demo.pos.Pos_user;
 import net.tsz.afinal.demo.pos.Pos_version;
 
-import java.io.File;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    private static final String TAG = "MainActivity";
     FinalDb db;
     private boolean isDo = false;
 
@@ -246,7 +245,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 new Thread() {
                     @Override
                     public void run() {
+                        long query_start = System.currentTimeMillis();
                         List<Pos_trade_info> infos = db.findAll(Pos_trade_info.class);
+                        Log.i("query item", "spend " + (System.currentTimeMillis() - query_start) + "ms");
                         int dataCount = 0;
                         long start = System.currentTimeMillis();
                         MainActivity.this.start();
@@ -284,20 +285,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }.start();
                 break;
             case R.id.btn_stop:
+                Log.i(TAG, "" + db.entryCount(Pos_trade_info.class));
                 isDo = false;
-                db.getDb().close();
+                // db.release();
                 break;
         }
     }
 
     public void start() {
-        db.execSQL("BEGIN;");
+        // db.execSQL("BEGIN;");
+        db.execSQL("BEGIN TRANSACTION;");
     }
 
     public void end() {
-        db.execSQL("COMMIT;");
-        File file= new File(Environment.getDataDirectory()+"/data/net.tsz.afinal.demo/databases/ts_db.db-journal");
-        Log.i("path",file.getAbsolutePath());
-        file.delete();
+        // db.execSQL("COMMIT;");
+        db.execSQL("END TRANSACTION;");
+        // File file = new File(Environment.getDataDirectory() + "/data/net.tsz.afinal.demo/databases/ts_db
+        // .db-journal");
+        // Log.i("path", file.getAbsolutePath());
+        // file.delete();
     }
 }

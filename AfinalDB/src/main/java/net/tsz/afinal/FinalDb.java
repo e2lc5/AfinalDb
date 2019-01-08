@@ -74,6 +74,15 @@ public class FinalDb {
         return dao;
     }
 
+    public void release() {
+        if (db != null && db.isOpen()) {
+            db.close();
+            db = null;
+        }
+        if (daoMap != null && daoMap.size() > 0)
+            daoMap.clear();
+    }
+
     /**
      * 创建FinalDb
      *
@@ -358,6 +367,27 @@ public class FinalDb {
         } else {
             Log.e(TAG, "sava error:sqlInfo is null");
         }
+    }
+
+    public int entryCount(Class<?> clazz) {
+        SqlInfo sqlInfo = SqlBuilder.getSelectCountSqlByTableName(clazz);
+        debugSql(sqlInfo.getSql());
+        try (Cursor cursor = db.rawQuery(sqlInfo.getSql(), sqlInfo.getBindArgsAsStringArray())) {
+            if (cursor.moveToNext()) {
+                return cursor.getInt(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public <T> T findFirst(Class<T> clazz) {
+        List<T> res = findAllBySql(clazz, SqlBuilder.getSelectSQL(clazz) + " LIMIT 1;");
+        if (res == null || res.size() == 0)
+            return null;
+        else
+            return res.get(0);
     }
 
     /**
@@ -850,6 +880,16 @@ public class FinalDb {
 
     public void setDb(SQLiteDatabase db) {
         this.db = db;
+    }
+
+    public void beginTransaction() {
+        debugSql("BEGIN;");
+        db.execSQL("BEGIN;");
+    }
+
+    public void endTransaction() {
+        debugSql("COMMIT;");
+        db.execSQL("COMMIT;");
     }
 
 }

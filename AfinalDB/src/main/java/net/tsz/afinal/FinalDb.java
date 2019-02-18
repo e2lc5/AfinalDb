@@ -47,6 +47,8 @@ public class FinalDb {
     private static final String TAG = "FinalDb";
 
     private static HashMap<String, FinalDb> daoMap = new HashMap<>();
+    /* 用于数据库更新时的操作 */
+    private int oldVersion = -1;
 
     private SQLiteDatabase db;
     private DaoConfig config;
@@ -198,8 +200,7 @@ public class FinalDb {
      * @return finalDb
      */
     public static FinalDb create(Context context, String targetDirectory, String dbName, boolean isDebug, int
-            dbVersion,
-                                 DbUpdateListener dbUpdateListener) {
+            dbVersion, DbUpdateListener dbUpdateListener) {
         DaoConfig config = new DaoConfig();
         config.setContext(context);
         config.setTargetDirectory(targetDirectory);
@@ -741,7 +742,33 @@ public class FinalDb {
                 cursor.close();
             cursor = null;
         }
+        return false;
+    }
 
+    public boolean indexIsExist(TableInfo table) {
+        if (table.isCheckDatabese())
+            return true;
+        Cursor cursor = null;
+        try {
+            String sql = "SELECT COUNT(*) AS c FROM sqlite_master WHERE type ='table' AND name ='"
+                    + table.getTableName() + "' ";
+            debugSql(sql);
+            cursor = db.rawQuery(sql, null);
+            if (cursor != null && cursor.moveToNext()) {
+                int count = cursor.getInt(0);
+                if (count > 0) {
+                    table.setCheckDatabese(true);
+                    return true;
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null)
+                cursor.close();
+            cursor = null;
+        }
         return false;
     }
 
@@ -843,11 +870,15 @@ public class FinalDb {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
+            if (mDbUpdateListener != null) {
+                mDbUpdateListener.onCreate(db);
+            }
         }
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             if (mDbUpdateListener != null) {
+                FinalDb.this.oldVersion = oldVersion;
                 mDbUpdateListener.onUpgrade(db, oldVersion, newVersion);
             } else { // 清空所有的数据信息
                 dropDb();
@@ -857,7 +888,9 @@ public class FinalDb {
     }
 
     public interface DbUpdateListener {
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
+        void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
+
+        void onCreate(SQLiteDatabase db);
     }
 
     // 用来获取表中的所有的字段
@@ -892,4 +925,25 @@ public class FinalDb {
         db.execSQL("COMMIT;");
     }
 
+    public DaoConfig getConfig() {
+        return config;
+    }
+
+    public int getOldVersion() {
+        return oldVersion;
+    }
+
+    public int count(String sql) {
+        return findDbModelListBySQL(sql).size();
+    }
+
+    /**
+     * 查询是否有数据,包括table,index,数据等
+     *
+     * @param sql 查询sql,注意一定要使用COUNT(*)
+     * @return 当前sql查到的数据量
+     */
+    public boolean has(String sql) {
+        return findDbModelListBySQL(sql).size() > 0;
+    }
 }

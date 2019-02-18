@@ -381,6 +381,8 @@ public class SqlBuilder {
         } else {
             if (property.getDefaultValue() != null && property.getDefaultValue().trim().length() != 0)
                 kv = new KeyValue(pcolumn, property.getDefaultValue());
+            else
+                kv = new KeyValue(pcolumn, null);
         }
         return kv;
     }

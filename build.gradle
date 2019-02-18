@@ -8,15 +8,15 @@ buildscript {
         }
     }
     repositories {
-        jcenter()
-        google()
+        maven() { url 'https://maven.aliyun.com/repository/google/' }
+        jcenter() { url 'https://maven.aliyun.com/repository/jcenter/' }
     }
 }
 
 allprojects {
     repositories {
-        jcenter()
-        google()
+        maven() { url 'https://maven.aliyun.com/repository/google/' }
+        jcenter() { url 'https://maven.aliyun.com/repository/jcenter/' }
     }
 }
 
@@ -46,7 +46,6 @@ android {
         exclude 'com/jfinal/weixin/sdk/encrypt/必读.txt' // will not include LICENSE file
         exclude 'META-INF/DEPENDENCIES'
     }
-
     android {
         lintOptions {
             abortOnError false
@@ -69,8 +68,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
     implementation project(':AfinalDB')
-
-    implementation(name: 'sqlite-android-3260000', ext: 'aar')
 }
 
 

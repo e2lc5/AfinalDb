@@ -61,7 +61,8 @@ public class FinalDb {
         if (config.getTargetDirectory() != null && config.getTargetDirectory().trim().length() > 0) {
             this.db = createDbFileOnSDCard(config.getTargetDirectory(), config.getDbName());
         } else {
-            this.db = new SqliteDbHelper(config.getContext().getApplicationContext(), config.getDbName(),
+            this.db = new SqliteDbHelper(config.getContext().getApplicationContext(),
+                    config.getDbName(),
                     config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
         }
         this.config = config;
@@ -159,7 +160,8 @@ public class FinalDb {
      * @param dbName  数据库名称
      * @param isDebug 是否为debug模式（debug模式进行数据库操作的时候将会打印sql语句）
      */
-    public static FinalDb create(Context context, String targetDirectory, String dbName, boolean isDebug) {
+    public static FinalDb create(Context context, String targetDirectory, String dbName,
+                                 boolean isDebug) {
         DaoConfig config = new DaoConfig();
         config.setContext(context);
         config.setTargetDirectory(targetDirectory);
@@ -199,8 +201,9 @@ public class FinalDb {
      *                         ：如果监听器为null，升级的时候将会清空所所有的数据
      * @return finalDb
      */
-    public static FinalDb create(Context context, String targetDirectory, String dbName, boolean isDebug, int
-            dbVersion, DbUpdateListener dbUpdateListener) {
+    public static FinalDb create(Context context, String targetDirectory, String dbName,
+                                 boolean isDebug, int
+                                         dbVersion, DbUpdateListener dbUpdateListener) {
         DaoConfig config = new DaoConfig();
         config.setContext(context);
         config.setTargetDirectory(targetDirectory);
@@ -347,18 +350,31 @@ public class FinalDb {
      * 删除所有数据表
      */
     public void dropDb() {
-        Cursor cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type ='table' AND name != " +
-                        "'sqlite_sequence'",
+        long start = 0;
+        if (isDebug())
+            start = System.currentTimeMillis();
+        Cursor cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type ='table' AND name " +
+                        "!= 'sqlite_sequence'",
                 null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 db.execSQL("DROP TABLE " + cursor.getString(0));
             }
+            if (isDebug() && start != 0)
+                showSpendTime(System.currentTimeMillis() - start);
         }
         if (cursor != null) {
             cursor.close();
             cursor = null;
         }
+    }
+
+    public boolean isDebug() {
+        return config != null && config.isDebug();
+    }
+
+    public void showSpendTime(long spend) {
+        android.util.Log.d("Debug SQL", ">>>>>> spend time is  " + spend + " ms");
     }
 
     private void exeSqlInfo(SqlInfo sqlInfo) {
@@ -373,8 +389,13 @@ public class FinalDb {
     public int entryCount(Class<?> clazz) {
         SqlInfo sqlInfo = SqlBuilder.getSelectCountSqlByTableName(clazz);
         debugSql(sqlInfo.getSql());
+        long start = 0;
+        if (isDebug())
+            start = System.currentTimeMillis();
         try (Cursor cursor = db.rawQuery(sqlInfo.getSql(), sqlInfo.getBindArgsAsStringArray())) {
             if (cursor.moveToNext()) {
+                if (isDebug() && start != 0)
+                    showSpendTime(System.currentTimeMillis() - start);
                 return cursor.getInt(0);
             }
         } catch (Exception e) {
@@ -401,9 +422,14 @@ public class FinalDb {
         SqlInfo sqlInfo = SqlBuilder.getSelectSqlAsSqlInfo(clazz, id);
         if (sqlInfo != null) {
             debugSql(sqlInfo.getSql());
+            long start = 0;
+            if (isDebug())
+                start = System.currentTimeMillis();
             Cursor cursor = db.rawQuery(sqlInfo.getSql(), sqlInfo.getBindArgsAsStringArray());
             try {
                 if (cursor.moveToNext()) {
+                    if (isDebug() && start != 0)
+                        showSpendTime(System.currentTimeMillis() - start);
                     return CursorUtils.getEntity(cursor, clazz, this);
                 }
             } catch (Exception e) {
@@ -487,12 +513,14 @@ public class FinalDb {
                         }
                         if (isFind) {
 
-                            T manyEntity = (T) findById(Integer.valueOf(id.toString()), many.getManyClass());
+                            T manyEntity = (T) findById(Integer.valueOf(id.toString()),
+                                    many.getManyClass());
                             if (manyEntity != null) {
                                 if (many.getValue(entity).getClass() == ManyToOneLazyLoader.class) {
                                     if (many.getValue(entity) == null) {
                                         many.setValue(entity,
-                                                new ManyToOneLazyLoader(entity, clazz, many.getManyClass(), this));
+                                                new ManyToOneLazyLoader(entity, clazz,
+                                                        many.getManyClass(), this));
                                     }
                                     ((ManyToOneLazyLoader) many.getValue(entity)).set(manyEntity);
                                 } else {
@@ -574,7 +602,8 @@ public class FinalDb {
                     }
 
                     if (isFind) {
-                        List<?> list = findAllByWhere(one.getOneClass(), one.getColumn() + "=" + id);
+                        List<?> list = findAllByWhere(one.getOneClass(),
+                                one.getColumn() + "=" + id);
                         if (list != null) {
                             /* 如果是OneToManyLazyLoader泛型，则执行灌入懒加载数据 */
                             if (one.getDataType() == OneToManyLazyLoader.class) {
@@ -630,7 +659,8 @@ public class FinalDb {
      * @param orderBy  排序字段
      */
     public <T> List<T> findAllByWhere(Class<T> clazz, String strWhere, String orderBy) {
-        return findAllBySql(clazz, SqlBuilder.getSelectSQLByWhere(clazz, strWhere) + " ORDER BY " + orderBy);
+        return findAllBySql(clazz,
+                SqlBuilder.getSelectSQLByWhere(clazz, strWhere) + " ORDER BY " + orderBy);
     }
 
     /**
@@ -641,6 +671,9 @@ public class FinalDb {
      */
     public <T> List<T> findAllBySql(Class<T> clazz, String strSQL) {
         debugSql(strSQL);
+        long start = 0;
+        if (isDebug())
+            start = System.currentTimeMillis();
         Cursor cursor = db.rawQuery(strSQL, null);
         try {
             List<T> list = new ArrayList<T>();
@@ -648,6 +681,8 @@ public class FinalDb {
                 T t = CursorUtils.getEntity(cursor, clazz, this);
                 list.add(t);
             }
+            if (isDebug() && start != 0)
+                showSpendTime(System.currentTimeMillis() - start);
             return list;
         } catch (Exception e) {
             e.printStackTrace();
@@ -666,9 +701,14 @@ public class FinalDb {
      */
     public DbModel findDbModelBySQL(String strSQL) {
         debugSql(strSQL);
+        long start = 0;
+        if (isDebug())
+            start = System.currentTimeMillis();
         Cursor cursor = db.rawQuery(strSQL, null);
         try {
-            if (cursor.moveToNext()) {
+            if (cursor.moveToFirst()) {
+                if (isDebug() && start != 0)
+                    showSpendTime(System.currentTimeMillis() - start);
                 return CursorUtils.getDbModel(cursor);
             }
         } catch (Exception e) {
@@ -681,12 +721,17 @@ public class FinalDb {
 
     public List<DbModel> findDbModelListBySQL(String strSQL) {
         debugSql(strSQL);
+        long start = 0;
+        if (isDebug())
+            start = System.currentTimeMillis();
         Cursor cursor = db.rawQuery(strSQL, null);
         List<DbModel> dbModelList = new ArrayList<DbModel>();
         try {
             while (cursor.moveToNext()) {
                 dbModelList.add(CursorUtils.getDbModel(cursor));
             }
+            if (isDebug() && start != 0)
+                showSpendTime(System.currentTimeMillis() - start);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -726,11 +771,16 @@ public class FinalDb {
             String sql = "SELECT COUNT(*) AS c FROM sqlite_master WHERE type ='table' AND name ='"
                     + table.getTableName() + "' ";
             debugSql(sql);
+            long start = 0;
+            if (isDebug())
+                start = System.currentTimeMillis();
             cursor = db.rawQuery(sql, null);
             if (cursor != null && cursor.moveToNext()) {
                 int count = cursor.getInt(0);
                 if (count > 0) {
                     table.setCheckDatabese(true);
+                    if (isDebug() && start != 0)
+                        showSpendTime(System.currentTimeMillis() - start);
                     return true;
                 }
             }
@@ -753,11 +803,16 @@ public class FinalDb {
             String sql = "SELECT COUNT(*) AS c FROM sqlite_master WHERE type ='table' AND name ='"
                     + table.getTableName() + "' ";
             debugSql(sql);
+            long start = 0;
+            if (isDebug())
+                start = System.currentTimeMillis();
             cursor = db.rawQuery(sql, null);
             if (cursor != null && cursor.moveToNext()) {
                 int count = cursor.getInt(0);
                 if (count > 0) {
                     table.setCheckDatabese(true);
+                    if (isDebug() && start != 0)
+                        showSpendTime(System.currentTimeMillis() - start);
                     return true;
                 }
             }
@@ -863,7 +918,8 @@ public class FinalDb {
 
         private DbUpdateListener mDbUpdateListener;
 
-        public SqliteDbHelper(Context context, String name, int version, DbUpdateListener dbUpdateListener) {
+        public SqliteDbHelper(Context context, String name, int version,
+                              DbUpdateListener dbUpdateListener) {
             super(context, name, null, version);
             this.mDbUpdateListener = dbUpdateListener;
         }

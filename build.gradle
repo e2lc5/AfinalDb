@@ -8,15 +8,15 @@ buildscript {
         }
     }
     repositories {
-        maven() { url 'https://maven.aliyun.com/repository/google/' }
-        jcenter() { url 'https://maven.aliyun.com/repository/jcenter/' }
+        google()
+        jcenter()
     }
 }
 
 allprojects {
     repositories {
-        maven() { url 'https://maven.aliyun.com/repository/google/' }
-        jcenter() { url 'https://maven.aliyun.com/repository/jcenter/' }
+        google()
+        jcenter()
     }
 }
 
@@ -46,14 +46,14 @@ android {
         exclude 'com/jfinal/weixin/sdk/encrypt/必读.txt' // will not include LICENSE file
         exclude 'META-INF/DEPENDENCIES'
     }
-    android {
-        lintOptions {
-            abortOnError false
-        }
-    }
     repositories {
         flatDir {
             dirs 'libs'
+        }
+    }
+    android {
+        lintOptions {
+            abortOnError false
         }
     }
 }

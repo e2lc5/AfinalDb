@@ -18,6 +18,7 @@ package net.tsz.afinal;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteCantOpenDatabaseException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
@@ -62,8 +63,7 @@ public class FinalDb {
             this.db = createDbFileOnSDCard(config.getTargetDirectory(), config.getDbName());
         } else {
             this.db = new SqliteDbHelper(config.getContext().getApplicationContext(),
-                    config.getDbName(),
-                    config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
+                    config.getDbName(), config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
         }
         this.config = config;
     }
@@ -75,15 +75,6 @@ public class FinalDb {
             daoMap.put(daoConfig.getDbName(), dao);
         }
         return dao;
-    }
-
-    public void release() {
-        if (db != null && db.isOpen()) {
-            db.close();
-            db = null;
-        }
-        if (daoMap != null && daoMap.size() > 0)
-            daoMap.clear();
     }
 
     /**
@@ -224,6 +215,15 @@ public class FinalDb {
         return getInstance(daoConfig);
     }
 
+    public void release() {
+        if (db != null && db.isOpen()) {
+            db.close();
+            db = null;
+        }
+        if (daoMap != null && daoMap.size() > 0)
+            daoMap.clear();
+    }
+
     /**
      * 保存数据库，速度要比save快
      *
@@ -353,18 +353,34 @@ public class FinalDb {
         long start = 0;
         if (isDebug())
             start = System.currentTimeMillis();
-        Cursor cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type ='table' AND name " +
-                        "!= 'sqlite_sequence'",
-                null);
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-                db.execSQL("DROP TABLE " + cursor.getString(0));
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type ='table' AND " +
+                            "name " +
+                            "!= 'sqlite_sequence'",
+                    null);
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    db.execSQL("DROP TABLE " + cursor.getString(0));
+                }
+                if (isDebug() && start != 0)
+                    showSpendTime(System.currentTimeMillis() - start);
             }
-            if (isDebug() && start != 0)
-                showSpendTime(System.currentTimeMillis() - start);
-        }
-        if (cursor != null) {
-            cursor.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (e instanceof SQLiteCantOpenDatabaseException) {
+                // 处理数据库异常关闭情况,主要因为cursor.moveToNext()
+                this.db.close();
+                android.util.Log.d("Debug SQL", ">>>>>>  db closed , start boot db");
+                this.db = new SqliteDbHelper(config.getContext().getApplicationContext(),
+                        config.getDbName(), config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
+                android.util.Log.d("Debug SQL",
+                        ">>>>>>  reopen db success :" + (db != null && db.isOpen()));
+                dropDb();
+            }
+        } finally {
+            if (cursor != null)
+                cursor.close();
             cursor = null;
         }
     }
@@ -400,6 +416,16 @@ public class FinalDb {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            if (e instanceof SQLiteCantOpenDatabaseException) {
+                // 处理数据库异常关闭情况,主要因为cursor.moveToNext()
+                this.db.close();
+                android.util.Log.d("Debug SQL", ">>>>>>  db closed , start boot db");
+                this.db = new SqliteDbHelper(config.getContext().getApplicationContext(),
+                        config.getDbName(), config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
+                android.util.Log.d("Debug SQL",
+                        ">>>>>>  reopen db success :" + (db != null && db.isOpen()));
+                return entryCount(clazz);
+            }
         }
         return 0;
     }
@@ -425,8 +451,9 @@ public class FinalDb {
             long start = 0;
             if (isDebug())
                 start = System.currentTimeMillis();
-            Cursor cursor = db.rawQuery(sqlInfo.getSql(), sqlInfo.getBindArgsAsStringArray());
+            Cursor cursor = null;
             try {
+                cursor = db.rawQuery(sqlInfo.getSql(), sqlInfo.getBindArgsAsStringArray());
                 if (cursor.moveToNext()) {
                     if (isDebug() && start != 0)
                         showSpendTime(System.currentTimeMillis() - start);
@@ -434,8 +461,20 @@ public class FinalDb {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                if (e instanceof SQLiteCantOpenDatabaseException) {
+                    // 处理数据库异常关闭情况,主要因为cursor.moveToNext()
+                    this.db.close();
+                    android.util.Log.d("Debug SQL", ">>>>>>  db closed , start boot db");
+                    this.db = new SqliteDbHelper(config.getContext().getApplicationContext(),
+                            config.getDbName(), config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
+                    android.util.Log.d("Debug SQL",
+                            ">>>>>>  reopen db success :" + (db != null && db.isOpen()));
+                    return findById(id,clazz);
+                }
             } finally {
-                cursor.close();
+                if (cursor != null)
+                    cursor.close();
+                cursor = null;
             }
         }
         return null;
@@ -674,8 +713,9 @@ public class FinalDb {
         long start = 0;
         if (isDebug())
             start = System.currentTimeMillis();
-        Cursor cursor = db.rawQuery(strSQL, null);
+        Cursor cursor = null;
         try {
+            cursor = db.rawQuery(strSQL, null);
             List<T> list = new ArrayList<T>();
             while (cursor.moveToNext()) {
                 T t = CursorUtils.getEntity(cursor, clazz, this);
@@ -686,6 +726,16 @@ public class FinalDb {
             return list;
         } catch (Exception e) {
             e.printStackTrace();
+            if (e instanceof SQLiteCantOpenDatabaseException) {
+                // 处理数据库异常关闭情况,主要因为cursor.moveToNext()
+                this.db.close();
+                android.util.Log.d("Debug SQL", ">>>>>>  db closed , start boot db");
+                this.db = new SqliteDbHelper(config.getContext().getApplicationContext(),
+                        config.getDbName(), config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
+                android.util.Log.d("Debug SQL",
+                        ">>>>>>  reopen db success :" + (db != null && db.isOpen()));
+                return findAllBySql(clazz, strSQL);
+            }
         } finally {
             if (cursor != null)
                 cursor.close();
@@ -704,17 +754,30 @@ public class FinalDb {
         long start = 0;
         if (isDebug())
             start = System.currentTimeMillis();
-        Cursor cursor = db.rawQuery(strSQL, null);
+        Cursor cursor = null;
         try {
-            if (cursor.moveToFirst()) {
+            cursor = db.rawQuery(strSQL, null);
+            if (cursor.moveToNext()) {
                 if (isDebug() && start != 0)
                     showSpendTime(System.currentTimeMillis() - start);
                 return CursorUtils.getDbModel(cursor);
             }
         } catch (Exception e) {
             e.printStackTrace();
+            if (e instanceof SQLiteCantOpenDatabaseException) {
+                // 处理数据库异常关闭情况,主要因为cursor.moveToNext()
+                this.db.close();
+                android.util.Log.d("Debug SQL", ">>>>>>  db closed , start boot db");
+                this.db = new SqliteDbHelper(config.getContext().getApplicationContext(),
+                        config.getDbName(), config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
+                android.util.Log.d("Debug SQL",
+                        ">>>>>>  reopen db success :" + (db != null && db.isOpen()));
+                return findDbModelBySQL(strSQL);
+            }
         } finally {
-            cursor.close();
+            if (cursor != null)
+                cursor.close();
+            cursor = null;
         }
         return null;
     }
@@ -724,9 +787,11 @@ public class FinalDb {
         long start = 0;
         if (isDebug())
             start = System.currentTimeMillis();
-        Cursor cursor = db.rawQuery(strSQL, null);
-        List<DbModel> dbModelList = new ArrayList<DbModel>();
+        Cursor cursor = null;
+        List<DbModel> dbModelList = null;
         try {
+            cursor = db.rawQuery(strSQL, null);
+            dbModelList = new ArrayList<DbModel>();
             while (cursor.moveToNext()) {
                 dbModelList.add(CursorUtils.getDbModel(cursor));
             }
@@ -734,8 +799,20 @@ public class FinalDb {
                 showSpendTime(System.currentTimeMillis() - start);
         } catch (Exception e) {
             e.printStackTrace();
+            if (e instanceof SQLiteCantOpenDatabaseException) {
+                // 处理数据库异常关闭情况,主要因为cursor.moveToNext()
+                this.db.close();
+                android.util.Log.d("Debug SQL", ">>>>>>  db closed , start boot db");
+                this.db = new SqliteDbHelper(config.getContext().getApplicationContext(),
+                        config.getDbName(), config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
+                android.util.Log.d("Debug SQL",
+                        ">>>>>>  reopen db success :" + (db != null && db.isOpen()));
+                return findDbModelListBySQL(strSQL);
+            }
         } finally {
-            cursor.close();
+            if (cursor != null)
+                cursor.close();
+            cursor = null;
         }
         return dbModelList;
     }
@@ -787,6 +864,16 @@ public class FinalDb {
 
         } catch (Exception e) {
             e.printStackTrace();
+            if (e instanceof SQLiteCantOpenDatabaseException) {
+                // 处理数据库异常关闭情况,主要因为cursor.moveToNext()
+                this.db.close();
+                android.util.Log.d("Debug SQL", ">>>>>>  db closed , start boot db");
+                this.db = new SqliteDbHelper(config.getContext().getApplicationContext(),
+                        config.getDbName(), config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
+                android.util.Log.d("Debug SQL",
+                        ">>>>>>  reopen db success :" + (db != null && db.isOpen()));
+               return tableIsExist(table);
+            }
         } finally {
             if (cursor != null)
                 cursor.close();
@@ -819,6 +906,16 @@ public class FinalDb {
 
         } catch (Exception e) {
             e.printStackTrace();
+            if (e instanceof SQLiteCantOpenDatabaseException) {
+                // 处理数据库异常关闭情况,主要因为cursor.moveToNext()
+                this.db.close();
+                android.util.Log.d("Debug SQL", ">>>>>>  db closed , start boot db");
+                this.db = new SqliteDbHelper(config.getContext().getApplicationContext(),
+                        config.getDbName(), config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
+                android.util.Log.d("Debug SQL",
+                        ">>>>>>  reopen db success :" + (db != null && db.isOpen()));
+                return indexIsExist(table);
+            }
         } finally {
             if (cursor != null)
                 cursor.close();
@@ -830,6 +927,90 @@ public class FinalDb {
     private void debugSql(String sql) {
         if (config != null && config.isDebug())
             android.util.Log.d("Debug SQL", ">>>>>>  " + sql);
+    }
+
+    /**
+     * 在SD卡的指定目录上创建文件
+     *
+     * @param sdcardPath sdcardPath
+     * @param dbfilename dbfilename
+     * @return SQLiteDatabase
+     */
+    private SQLiteDatabase createDbFileOnSDCard(String sdcardPath, String dbfilename) {
+        File dbf = new File(sdcardPath, dbfilename);
+        if (!dbf.exists()) {
+            try {
+                if (dbf.createNewFile()) {
+                    return SQLiteDatabase.openOrCreateDatabase(dbf, null);
+                }
+            } catch (IOException ioex) {
+                throw new DbException("数据库文件创建失败", ioex);
+            }
+        } else {
+            return SQLiteDatabase.openOrCreateDatabase(dbf, null);
+        }
+
+        return null;
+    }
+
+    // 用来获取表中的所有的字段
+    public List<String> getSaveKeyList(Class<?> c) {
+        TableInfo table = TableInfo.get(c);
+        String property = table.getProperties();
+        String str = (String) property.subSequence(1, property.length() - 1);
+        String[] fields = str.split(",");
+
+        List<String> list = new ArrayList<>(Arrays.asList(fields).subList(1, fields.length));
+        if (list.size() == 0) {
+            return null;
+        }
+        return list;
+    }
+
+    public SQLiteDatabase getDb() {
+        return db;
+    }
+
+    public void setDb(SQLiteDatabase db) {
+        this.db = db;
+    }
+
+    public void beginTransaction() {
+        debugSql("BEGIN;");
+        db.execSQL("BEGIN;");
+    }
+
+    public void endTransaction() {
+        debugSql("COMMIT;");
+        db.execSQL("COMMIT;");
+    }
+
+    public DaoConfig getConfig() {
+        return config;
+    }
+
+    public int getOldVersion() {
+        return oldVersion;
+    }
+
+    public int count(String sql) {
+        return findDbModelListBySQL(sql).size();
+    }
+
+    /**
+     * 查询是否有数据,包括table,index,数据等
+     *
+     * @param sql 查询sql,注意一定要使用COUNT(*)
+     * @return 当前sql查到的数据量
+     */
+    public boolean has(String sql) {
+        return findDbModelListBySQL(sql).size() > 0;
+    }
+
+    public interface DbUpdateListener {
+        void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
+
+        void onCreate(SQLiteDatabase db);
     }
 
     public static class DaoConfig {
@@ -890,30 +1071,6 @@ public class FinalDb {
         }
     }
 
-    /**
-     * 在SD卡的指定目录上创建文件
-     *
-     * @param sdcardPath sdcardPath
-     * @param dbfilename dbfilename
-     * @return SQLiteDatabase
-     */
-    private SQLiteDatabase createDbFileOnSDCard(String sdcardPath, String dbfilename) {
-        File dbf = new File(sdcardPath, dbfilename);
-        if (!dbf.exists()) {
-            try {
-                if (dbf.createNewFile()) {
-                    return SQLiteDatabase.openOrCreateDatabase(dbf, null);
-                }
-            } catch (IOException ioex) {
-                throw new DbException("数据库文件创建失败", ioex);
-            }
-        } else {
-            return SQLiteDatabase.openOrCreateDatabase(dbf, null);
-        }
-
-        return null;
-    }
-
     class SqliteDbHelper extends SQLiteOpenHelper {
 
         private DbUpdateListener mDbUpdateListener;
@@ -941,65 +1098,5 @@ public class FinalDb {
             }
         }
 
-    }
-
-    public interface DbUpdateListener {
-        void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
-
-        void onCreate(SQLiteDatabase db);
-    }
-
-    // 用来获取表中的所有的字段
-    public List<String> getSaveKeyList(Class<?> c) {
-        TableInfo table = TableInfo.get(c);
-        String property = table.getProperties();
-        String str = (String) property.subSequence(1, property.length() - 1);
-        String[] fields = str.split(",");
-
-        List<String> list = new ArrayList<>(Arrays.asList(fields).subList(1, fields.length));
-        if (list.size() == 0) {
-            return null;
-        }
-        return list;
-    }
-
-    public SQLiteDatabase getDb() {
-        return db;
-    }
-
-    public void setDb(SQLiteDatabase db) {
-        this.db = db;
-    }
-
-    public void beginTransaction() {
-        debugSql("BEGIN;");
-        db.execSQL("BEGIN;");
-    }
-
-    public void endTransaction() {
-        debugSql("COMMIT;");
-        db.execSQL("COMMIT;");
-    }
-
-    public DaoConfig getConfig() {
-        return config;
-    }
-
-    public int getOldVersion() {
-        return oldVersion;
-    }
-
-    public int count(String sql) {
-        return findDbModelListBySQL(sql).size();
-    }
-
-    /**
-     * 查询是否有数据,包括table,index,数据等
-     *
-     * @param sql 查询sql,注意一定要使用COUNT(*)
-     * @return 当前sql查到的数据量
-     */
-    public boolean has(String sql) {
-        return findDbModelListBySQL(sql).size() > 0;
     }
 }

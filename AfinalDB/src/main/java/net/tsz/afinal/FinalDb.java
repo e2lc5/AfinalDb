@@ -395,8 +395,13 @@ public class FinalDb {
 
     private void exeSqlInfo(SqlInfo sqlInfo) {
         if (sqlInfo != null) {
+            long start = 0;
+            if (isDebug())
+                start = System.currentTimeMillis();
             debugSql(sqlInfo.getSql());
             db.execSQL(sqlInfo.getSql(), sqlInfo.getBindArgsAsArray());
+            if (isDebug() && start != 0)
+                showSpendTime(System.currentTimeMillis() - start);
         } else {
             Log.e(TAG, "sava error:sqlInfo is null");
         }

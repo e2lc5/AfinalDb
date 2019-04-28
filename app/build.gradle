@@ -8,6 +8,7 @@ android {
         targetSdkVersion build_versions.target_sdk
         versionCode AFINAL_VERSION_CODE as int
         versionName AFINAL_VERSION_NAME
+        // testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

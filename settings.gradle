@@ -1,1 +1,1 @@
-include ':AfinalDB'
+include ':AfinalDB',':app'

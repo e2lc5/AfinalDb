@@ -8,3 +8,4 @@
 /gradlew.bat
 /AfinalDB/*.iml
 *.iml
+/*.gradle

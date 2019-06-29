@@ -55,10 +55,12 @@ public class FinalDb {
     private DaoConfig config;
 
     private FinalDb(DaoConfig config) {
-        if (config == null)
+        if (config == null) {
             throw new DbException("daoConfig is null");
-        if (config.getContext() == null)
+        }
+        if (config.getContext() == null) {
             throw new DbException("android context is null");
+        }
         if (config.getTargetDirectory() != null && config.getTargetDirectory().trim().length() > 0) {
             this.db = createDbFileOnSDCard(config.getTargetDirectory(), config.getDbName());
         } else {
@@ -220,8 +222,9 @@ public class FinalDb {
             db.close();
             db = null;
         }
-        if (daoMap != null && daoMap.size() > 0)
+        if (daoMap != null && daoMap.size() > 0) {
             daoMap.clear();
+        }
     }
 
     /**
@@ -248,8 +251,9 @@ public class FinalDb {
             ContentValues cv = new ContentValues();
             insertContentValues(entityKvList, cv);
             Long id = db.insert(tf.getTableName(), null, cv);
-            if (id == -1)
+            if (id == -1) {
                 return false;
+            }
             tf.getId().setValue(entity, id);
             return true;
         }
@@ -351,8 +355,9 @@ public class FinalDb {
      */
     public void dropDb() {
         long start = 0;
-        if (isDebug())
+        if (isDebug()) {
             start = System.currentTimeMillis();
+        }
         Cursor cursor = null;
         try {
             cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type ='table' AND " +
@@ -363,8 +368,9 @@ public class FinalDb {
                 while (cursor.moveToNext()) {
                     db.execSQL("DROP TABLE " + cursor.getString(0));
                 }
-                if (isDebug() && start != 0)
+                if (isDebug() && start != 0) {
                     showSpendTime(System.currentTimeMillis() - start);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -379,8 +385,9 @@ public class FinalDb {
                 dropDb();
             }
         } finally {
-            if (cursor != null)
+            if (cursor != null) {
                 cursor.close();
+            }
             cursor = null;
         }
     }
@@ -396,12 +403,14 @@ public class FinalDb {
     private void exeSqlInfo(SqlInfo sqlInfo) {
         if (sqlInfo != null) {
             long start = 0;
-            if (isDebug())
+            if (isDebug()) {
                 start = System.currentTimeMillis();
+            }
             debugSql(sqlInfo.getSql());
             db.execSQL(sqlInfo.getSql(), sqlInfo.getBindArgsAsArray());
-            if (isDebug() && start != 0)
+            if (isDebug() && start != 0) {
                 showSpendTime(System.currentTimeMillis() - start);
+            }
         } else {
             Log.e(TAG, "sava error:sqlInfo is null");
         }
@@ -411,12 +420,14 @@ public class FinalDb {
         SqlInfo sqlInfo = SqlBuilder.getSelectCountSqlByTableName(clazz);
         debugSql(sqlInfo.getSql());
         long start = 0;
-        if (isDebug())
+        if (isDebug()) {
             start = System.currentTimeMillis();
+        }
         try (Cursor cursor = db.rawQuery(sqlInfo.getSql(), sqlInfo.getBindArgsAsStringArray())) {
             if (cursor.moveToNext()) {
-                if (isDebug() && start != 0)
+                if (isDebug() && start != 0) {
                     showSpendTime(System.currentTimeMillis() - start);
+                }
                 return cursor.getInt(0);
             }
         } catch (Exception e) {
@@ -437,10 +448,11 @@ public class FinalDb {
 
     public <T> T findFirst(Class<T> clazz) {
         List<T> res = findAllBySql(clazz, SqlBuilder.getSelectSQL(clazz) + " LIMIT 1;");
-        if (res == null || res.size() == 0)
+        if (res == null || res.size() == 0) {
             return null;
-        else
+        } else {
             return res.get(0);
+        }
     }
 
     /**
@@ -454,14 +466,16 @@ public class FinalDb {
         if (sqlInfo != null) {
             debugSql(sqlInfo.getSql());
             long start = 0;
-            if (isDebug())
+            if (isDebug()) {
                 start = System.currentTimeMillis();
+            }
             Cursor cursor = null;
             try {
                 cursor = db.rawQuery(sqlInfo.getSql(), sqlInfo.getBindArgsAsStringArray());
                 if (cursor.moveToNext()) {
-                    if (isDebug() && start != 0)
+                    if (isDebug() && start != 0) {
                         showSpendTime(System.currentTimeMillis() - start);
+                    }
                     return CursorUtils.getEntity(cursor, clazz, this);
                 }
             } catch (Exception e) {
@@ -474,11 +488,12 @@ public class FinalDb {
                             config.getDbName(), config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
                     android.util.Log.d("Debug SQL",
                             ">>>>>>  reopen db success :" + (db != null && db.isOpen()));
-                    return findById(id,clazz);
+                    return findById(id, clazz);
                 }
             } finally {
-                if (cursor != null)
+                if (cursor != null) {
                     cursor.close();
+                }
                 cursor = null;
             }
         }
@@ -716,8 +731,9 @@ public class FinalDb {
     public <T> List<T> findAllBySql(Class<T> clazz, String strSQL) {
         debugSql(strSQL);
         long start = 0;
-        if (isDebug())
+        if (isDebug()) {
             start = System.currentTimeMillis();
+        }
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(strSQL, null);
@@ -726,8 +742,9 @@ public class FinalDb {
                 T t = CursorUtils.getEntity(cursor, clazz, this);
                 list.add(t);
             }
-            if (isDebug() && start != 0)
+            if (isDebug() && start != 0) {
                 showSpendTime(System.currentTimeMillis() - start);
+            }
             return list;
         } catch (Exception e) {
             e.printStackTrace();
@@ -742,8 +759,9 @@ public class FinalDb {
                 return findAllBySql(clazz, strSQL);
             }
         } finally {
-            if (cursor != null)
+            if (cursor != null) {
                 cursor.close();
+            }
             cursor = null;
         }
         return null;
@@ -757,14 +775,16 @@ public class FinalDb {
     public DbModel findDbModelBySQL(String strSQL) {
         debugSql(strSQL);
         long start = 0;
-        if (isDebug())
+        if (isDebug()) {
             start = System.currentTimeMillis();
+        }
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(strSQL, null);
             if (cursor.moveToNext()) {
-                if (isDebug() && start != 0)
+                if (isDebug() && start != 0) {
                     showSpendTime(System.currentTimeMillis() - start);
+                }
                 return CursorUtils.getDbModel(cursor);
             }
         } catch (Exception e) {
@@ -780,8 +800,9 @@ public class FinalDb {
                 return findDbModelBySQL(strSQL);
             }
         } finally {
-            if (cursor != null)
+            if (cursor != null) {
                 cursor.close();
+            }
             cursor = null;
         }
         return null;
@@ -790,8 +811,9 @@ public class FinalDb {
     public List<DbModel> findDbModelListBySQL(String strSQL) {
         debugSql(strSQL);
         long start = 0;
-        if (isDebug())
+        if (isDebug()) {
             start = System.currentTimeMillis();
+        }
         Cursor cursor = null;
         List<DbModel> dbModelList = null;
         try {
@@ -800,8 +822,9 @@ public class FinalDb {
             while (cursor.moveToNext()) {
                 dbModelList.add(CursorUtils.getDbModel(cursor));
             }
-            if (isDebug() && start != 0)
+            if (isDebug() && start != 0) {
                 showSpendTime(System.currentTimeMillis() - start);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             if (e instanceof SQLiteCantOpenDatabaseException) {
@@ -815,8 +838,9 @@ public class FinalDb {
                 return findDbModelListBySQL(strSQL);
             }
         } finally {
-            if (cursor != null)
+            if (cursor != null) {
                 cursor.close();
+            }
             cursor = null;
         }
         return dbModelList;
@@ -846,23 +870,26 @@ public class FinalDb {
     }
 
     public boolean tableIsExist(TableInfo table) {
-        if (table.isCheckDatabese())
+        if (table.isCheckDatabese()) {
             return true;
+        }
         Cursor cursor = null;
         try {
             String sql = "SELECT COUNT(*) AS c FROM sqlite_master WHERE type ='table' AND name ='"
                     + table.getTableName() + "' ";
             debugSql(sql);
             long start = 0;
-            if (isDebug())
+            if (isDebug()) {
                 start = System.currentTimeMillis();
+            }
             cursor = db.rawQuery(sql, null);
             if (cursor != null && cursor.moveToNext()) {
                 int count = cursor.getInt(0);
                 if (count > 0) {
                     table.setCheckDatabese(true);
-                    if (isDebug() && start != 0)
+                    if (isDebug() && start != 0) {
                         showSpendTime(System.currentTimeMillis() - start);
+                    }
                     return true;
                 }
             }
@@ -877,34 +904,38 @@ public class FinalDb {
                         config.getDbName(), config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
                 android.util.Log.d("Debug SQL",
                         ">>>>>>  reopen db success :" + (db != null && db.isOpen()));
-               return tableIsExist(table);
+                return tableIsExist(table);
             }
         } finally {
-            if (cursor != null)
+            if (cursor != null) {
                 cursor.close();
+            }
             cursor = null;
         }
         return false;
     }
 
     public boolean indexIsExist(TableInfo table) {
-        if (table.isCheckDatabese())
+        if (table.isCheckDatabese()) {
             return true;
+        }
         Cursor cursor = null;
         try {
             String sql = "SELECT COUNT(*) AS c FROM sqlite_master WHERE type ='table' AND name ='"
                     + table.getTableName() + "' ";
             debugSql(sql);
             long start = 0;
-            if (isDebug())
+            if (isDebug()) {
                 start = System.currentTimeMillis();
+            }
             cursor = db.rawQuery(sql, null);
             if (cursor != null && cursor.moveToNext()) {
                 int count = cursor.getInt(0);
                 if (count > 0) {
                     table.setCheckDatabese(true);
-                    if (isDebug() && start != 0)
+                    if (isDebug() && start != 0) {
                         showSpendTime(System.currentTimeMillis() - start);
+                    }
                     return true;
                 }
             }
@@ -922,16 +953,18 @@ public class FinalDb {
                 return indexIsExist(table);
             }
         } finally {
-            if (cursor != null)
+            if (cursor != null) {
                 cursor.close();
+            }
             cursor = null;
         }
         return false;
     }
 
     private void debugSql(String sql) {
-        if (config != null && config.isDebug())
-            android.util.Log.d("Debug SQL", ">>>>>>  " + sql);
+        if (config != null && config.isDebug()) {
+            Log.d("Debug SQL", ">>>>>>  " + sql);
+        }
     }
 
     /**

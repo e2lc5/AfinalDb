@@ -5,6 +5,9 @@ buildscript {
         classpath deps.android_gradle_plugin
         classpath deps.net_sf_proguard
     }
+    repositories {
+        google()
+    }
 }
 
 allprojects {

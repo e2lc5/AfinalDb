@@ -1042,7 +1042,8 @@ public class FinalDb {
      * @return 当前sql查到的数据量
      */
     public boolean has(String sql) {
-        return findDbModelListBySQL(sql).size() > 0;
+        List list = findDbModelListBySQL(sql);
+        return list != null && list.size() > 0;
     }
 
     public interface DbUpdateListener {

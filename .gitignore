@@ -1,0 +1,11 @@
+/.gradle
+/.idea
+/AfinalDB/build
+/build
+/gradle
+/*.iml
+/gradlew
+/gradlew.bat
+/AfinalDB/*.iml
+*.iml
+/*.gradle

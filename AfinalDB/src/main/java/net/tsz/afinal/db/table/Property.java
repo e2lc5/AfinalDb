@@ -15,6 +15,9 @@
  */
 package net.tsz.afinal.db.table;
 
+import android.text.TextUtils;
+import android.util.Log;
+
 import net.tsz.afinal.utils.FieldUtils;
 
 import java.lang.reflect.Field;
@@ -51,35 +54,32 @@ public class Property {
                     if (value.toString().equals("null") || value.equals("")) {
                         value = "0";
                     }
-                    set.invoke(receiver, value == null ? (Integer) null : Integer.parseInt(value
-                            .toString()));
+                    set.invoke(receiver, value.equals("") ? null :
+                            Integer.parseInt(value.toString()));
                 } else if (dataType == float.class || dataType == Float.class) {
-                    set.invoke(receiver, value == null ? (Float) null : Float.parseFloat(value
-                            .toString()));
+                    set.invoke(receiver, value.equals("") ? null :
+                            Float.parseFloat(value.toString()));
                 } else if (dataType == double.class || dataType == Double.class) {
-                    set.invoke(receiver, value == null ? (Double) null : Double.parseDouble(value
-                            .equals("null") ? "0.00" :
-                            value.toString()));
+                    set.invoke(receiver, value.equals("") ? null :
+                            Double.parseDouble(value.equals("null") ? "0.00" : value.toString()));
                 } else if (dataType == long.class || dataType == Long.class) {
-                    set.invoke(receiver, value == null ? (Long) null : Long.parseLong(value
-                            .toString()));
+                    set.invoke(receiver, value.equals("") ? null :
+                            Long.parseLong(value.toString()));
                 } else if (dataType == java.util.Date.class || dataType == java.sql.Date.class) {
-                    set.invoke(receiver, value == null ? (Date) null : FieldUtils
-                            .stringToDateTime(value.toString()));
+                    set.invoke(receiver, value.equals("") ? null :
+                            FieldUtils.stringToDateTime(value.toString()));
                 } else if (dataType == boolean.class || dataType == Boolean.class) {
-                    set.invoke(receiver, value == null ? (Boolean) null : "1".equals(value
-                            .toString()));
+                    set.invoke(receiver, value.equals("") ? null :
+                            "1".equals(value.toString()));
                 } else if (dataType == BigInteger.class) {
-                    set.invoke(receiver, value == null ? (BigInteger) null : new BigInteger(value
-                            .toString()));
+                    set.invoke(receiver, value.equals("") ? null :
+                            new BigInteger(value.toString()));
                 } else if (dataType == BigDecimal.class) {
                     try {
-                        set.invoke(receiver, value == null ? (BigDecimal) null : new BigDecimal
-                                (value.toString()));
+                        set.invoke(receiver, value.equals("") ? null : new BigDecimal(value.toString()));
                     } catch (NumberFormatException n) {
                         set.invoke(receiver, BigDecimal.ZERO);
-//                        Log.d(this.getClass().getSimpleName(), "NumberFormatException on " +
-// value);
+                        Log.d(this.getClass().getSimpleName(), "NumberFormatException on " + value);
                     }
                 } else {
                     set.invoke(receiver, value);
@@ -88,21 +88,21 @@ public class Property {
                 e.printStackTrace();
             }
         } else {
-            // try {
-            // field.setAccessible(true);
-            // field.set(receiver, value);
-            // } catch (Exception e) {
-            // System.out.println(field.toString());
-            // e.printStackTrace();
-            // }
+            try {
+                field.setAccessible(true);
+                field.set(receiver, value);
+            } catch (Exception e) {
+                System.out.println(field.toString());
+                e.printStackTrace();
+            }
         }
     }
 
     /**
      * 获取某个实体执行某个方法的结果
      *
-     * @param obj
-     * @return
+     * @param obj key
+     * @return value
      */
     @SuppressWarnings("unchecked")
     public <T> T getValue(Object obj) {

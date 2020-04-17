@@ -715,11 +715,33 @@ public class FinalDb {
      *
      * @param clazz    class
      * @param strWhere 条件为空的时候查找所有数据
+     */
+    public <T> List<T> findAllByWhere(Class<T> clazz, String strWhere, String[] args) {
+        return findAllBySql(clazz, SqlBuilder.getSelectSQLByWhere(clazz, strWhere), args);
+    }
+
+    /**
+     * 根据条件查找所有数据
+     *
+     * @param clazz    class
+     * @param strWhere 条件为空的时候查找所有数据
      * @param orderBy  排序字段
      */
     public <T> List<T> findAllByWhere(Class<T> clazz, String strWhere, String orderBy) {
         return findAllBySql(clazz,
                 SqlBuilder.getSelectSQLByWhere(clazz, strWhere) + " ORDER BY " + orderBy);
+    }
+
+    /**
+     * 根据条件查找所有数据
+     *
+     * @param clazz    class
+     * @param strWhere 条件为空的时候查找所有数据
+     * @param orderBy  排序字段
+     */
+    public <T> List<T> findAllByWhere(Class<T> clazz, String strWhere, String orderBy, String[] args) {
+        return findAllBySql(clazz,
+                SqlBuilder.getSelectSQLByWhere(clazz, strWhere) + " ORDER BY " + orderBy, args);
     }
 
     /**
@@ -737,6 +759,51 @@ public class FinalDb {
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(strSQL, null);
+            List<T> list = new ArrayList<T>();
+            while (cursor.moveToNext()) {
+                T t = CursorUtils.getEntity(cursor, clazz, this);
+                list.add(t);
+            }
+            if (isDebug() && start != 0) {
+                showSpendTime(System.currentTimeMillis() - start);
+            }
+            return list;
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (e instanceof SQLiteCantOpenDatabaseException) {
+                // 处理数据库异常关闭情况,主要因为cursor.moveToNext()
+                this.db.close();
+                android.util.Log.d("Debug SQL", ">>>>>>  db closed , start boot db");
+                this.db = new SqliteDbHelper(config.getContext().getApplicationContext(),
+                        config.getDbName(), config.getDbVersion(), config.getDbUpdateListener()).getWritableDatabase();
+                android.util.Log.d("Debug SQL",
+                        ">>>>>>  reopen db success :" + (db != null && db.isOpen()));
+                return findAllBySql(clazz, strSQL);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            cursor = null;
+        }
+        return null;
+    }
+
+    /**
+     * 根据条件查找所有数据
+     *
+     * @param clazz  clazz
+     * @param strSQL strSql
+     */
+    public <T> List<T> findAllBySql(Class<T> clazz, String strSQL, String[] args) {
+        debugSql(strSQL);
+        long start = 0;
+        if (isDebug()) {
+            start = System.currentTimeMillis();
+        }
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(strSQL, args);
             List<T> list = new ArrayList<T>();
             while (cursor.moveToNext()) {
                 T t = CursorUtils.getEntity(cursor, clazz, this);

@@ -834,12 +834,26 @@ public class FinalDb {
         return null;
     }
 
+    public int queryForInt(String strSQL, String[] args) {
+        DbModel dbModel = findDbModelBySQL(strSQL, args);
+        return dbModel.getInt(dbModel.getFirstKey());
+    }
+
     /**
      * 根据sql语句查找数据，这个一般用于数据统计
      *
      * @param strSQL strSQL
      */
     public DbModel findDbModelBySQL(String strSQL) {
+        return findDbModelBySQL(strSQL, null);
+    }
+
+    /**
+     * 根据sql语句查找数据，这个一般用于数据统计
+     *
+     * @param strSQL strSQL
+     */
+    public DbModel findDbModelBySQL(String strSQL, String[] args) {
         debugSql(strSQL);
         long start = 0;
         if (isDebug()) {
@@ -847,7 +861,7 @@ public class FinalDb {
         }
         Cursor cursor = null;
         try {
-            cursor = db.rawQuery(strSQL, null);
+            cursor = db.rawQuery(strSQL, args);
             if (cursor.moveToNext()) {
                 if (isDebug() && start != 0) {
                     showSpendTime(System.currentTimeMillis() - start);

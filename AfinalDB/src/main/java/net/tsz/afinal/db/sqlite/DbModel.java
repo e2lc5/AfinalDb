@@ -32,6 +32,10 @@ public class DbModel {
         return dataMap.get(column);
     }
 
+    public String getFirstKey() {
+        return (String) dataMap.keySet().toArray()[0];
+    }
+
     public String getString(String column) {
         return String.valueOf(get(column));
     }

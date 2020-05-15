@@ -9,3 +9,4 @@
 /AfinalDB/*.iml
 *.iml
 /*.gradle
+app/build/

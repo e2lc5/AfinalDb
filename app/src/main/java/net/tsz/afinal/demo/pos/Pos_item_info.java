@@ -1,6 +1,6 @@
 package net.tsz.afinal.demo.pos;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import net.tsz.afinal.annotation.sqlite.Id;
 import net.tsz.afinal.annotation.sqlite.Property;

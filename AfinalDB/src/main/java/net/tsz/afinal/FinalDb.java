@@ -328,6 +328,14 @@ public class FinalDb {
     }
 
     /**
+     * 根据条件删除数据
+     */
+    public void deleteBySql(String sql) {
+        debugSql(sql);
+        db.execSQL(sql);
+    }
+
+    /**
      * 删除表的所有数据
      *
      * @param clazz class

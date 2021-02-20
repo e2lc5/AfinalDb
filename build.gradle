@@ -1,15 +1,125 @@
 buildscript {
-    apply from: 'versions.gradle'
-    addRepos(repositories)
-    dependencies {
-        classpath deps.android_gradle_plugin
-        classpath deps.net_sf_proguard
-    }
     repositories {
+        jcenter()
         google()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.1.2'
+        classpath 'net.sf.proguard:proguard-gradle:6.0.3'
     }
 }
 
 allprojects {
-    addRepos(repositories)
+    repositories {
+        jcenter()
+        google()
+    }
+}
+
+// Define versions in a single place
+ext {
+    // Sdk and tools
+    minSdkVersion = 19
+    targetSdkVersion = 30
+    compileSdkVersion = 30
+    buildToolsVersion = '30.0.3'
+
+    // androidx support library version
+    cardViewVersion = '1.0.0'
+    percentVersion = '1.0.0'
+    v13Version = '1.0.0'
+    v4Version = '1.0.0'
+    gridlayoutVersion = "1.0.0"
+    coreUIVersion = "1.0.0"
+    recyclerViewVersion = '1.1.0'
+    vectorVersion = '1.1.0'
+    androidannotationsVersion = "1.1.0"
+    supportLibraryVersion = '1.2.0'
+    supportMediaCompatVersion = "1.2.1"
+    materialVersion = '1.2.1'
+    fragmentVersion = "1.2.5"
+    coreVersion = "1.3.2"
+    constraintLayoutVersion = '2.0.4'
+    roomDatabaseVersion = '2.2.5'
+
+    // App dependencies
+    gsonVersion = '2.8.6'
+    calligraphyVersion = '2.2.0'
+    glideVersion = '4.11.0'
+    rx2FastAndroidNetworking = '1.0.1'
+
+    dagger2Version = '2.29.1'
+    rxjava2Version = '2.2.19'
+    rxandroidVersion = '2.1.1'
+    butterKnifeVersion = '10.2.3'
+    placeholderviewVersion = '0.6.1'
+    debugDBVersion = '1.0.4'
+    timberVersion = '4.7.0'
+    lifecycleVersion = '2.2.0'
+
+    // Test dependencies
+    junitVersion = '4.13.1'
+    espressoVersion = '3.3.0'
+    mockitoVersion = '3.3.3'
+    ajunit = '1.1.2'
+
+    // app version
+    appVersionCode = 2
+    appVersionName = '1.0.4'
+
+    // extends library
+    databindingVersion = '4.1.0'
+    fastjsonVersion = '1.1.71.android'
+    acraVersion = '5.1.3'
+    xlogVersion = '1.6.2'
+    multdexVersion = '2.0.1'
+    zxingEmbeddedVersion = '3.5.0'
+    leakcanaryVersion = '1.6.3'
+    xrefreshviewVersion = '3.6.9'
+    hotfixVersion = '3.2.16'
+    baseRecyclerViewAdapterHelper = "2.9.34"
+    permissionsdispatcher = "4.7.0"
+    blockcanaryVersion = "1.5.0"
+    circleindicatorVersion = "2.1.4"
+    frescoVersion = "1.9.0"
+    landiPayVersion = "1.0.4"
+    ijkplayerVersion = "0.8.8"
+    utilcodeVersion = "1.13.10"
+    tslogVersion = "1.0-debug"
+    tscaleVersion = "0.2.1"
+    serialVersion = "1.0.1"
+    materialDialogVersion = "0.9.4.5"
+    javassist = "3.27.0-GA"
+    retrofitVersion = "2.7.1"
+    okhttpVersion = "3.9.0"
+    loggingInterceptor = "3.10.0"
+    hj_finaldb = "1.0.3"
+    hj_utils = "1.0"
+    hj_asc = "1.0.9"
+    hj_thread = "1.0.3"
+    workVersion = '2.4.0'
+    appiumVersion = 'v7.3.0'
+    eventbusVersion = '3.2.0'
+    AndroidPickerVersion = '1.5.6'
+    materialprogressbarVersion = '1.4.1'
+    zxingVersion = '3.3.3'
+    preferenceVersion = '1.1.1'
+    greendaoVersion = '3.3.0'
+    smackVersion = "4.1.9"
+    greendaoHelper = "v2.1.0"
+    navigationtabstrip = '1.0.4'
+    circleimageview = '3.1.0'
+    easypermissions = "2.0.0"
+    ndkVersion = '22.0.7026061'
+    infinitecycleviewpager = '1.0.2'
+    circularFloatingActionMenu = '1.0.2'
+    swipemenulistview = '1.3.0'
+    smartrefreshVersion = '1.1.0'
+    ultraviewpagerVersion = '1.0.7.8@aar'
+    swipelayoutVersion = '1.2.0@aar'
+
+    // hardware library verison
+    sunMiPrinterVersion = '1.0.8'
+    hjPrinterVersion = '1.0.5'
+    tsPrinterVersion = '0.1.2'
 }
